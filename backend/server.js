@@ -2,8 +2,11 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import productRoutes from "./routes/product.js";
 
 import authRoutes from "./routes/auth.js";
+
+app.use("/api/products", productRoutes);
 
 dotenv.config();
 const app = express();
