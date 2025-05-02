@@ -1,3 +1,64 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221 83% 23%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 180 84% 31%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 180 84% 31%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221 83% 23%;
+    --radius: 0.5rem;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .hero-gradient {
+    @apply bg-gradient-to-r from-primary to-secondary;
+  }
+  
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 transition-all;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-secondary text-white rounded-md hover:bg-secondary/90 transition-all;
+  }
+  
+  .btn-outline {
+    @apply px-6 py-3 border border-primary text-primary rounded-md hover:bg-primary/10 transition-all;
+  }
+  
+  .card-zoom {
+    @apply overflow-hidden rounded-lg;
+  }
+  
+  .card-zoom-image {
+    @apply w-full h-full transition-all duration-500 ease-in-out transform hover:scale-110;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+}

@@ -3,8 +3,13 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import productRoutes from "./routes/product.js";
-
 import authRoutes from "./routes/auth.js";
+import checkoutRoutes from "./routes/checkout.js";
+import orderRoutes from "./routes/order.js";
+
+
+app.use("/api/orders", orderRoutes);
+app.use("/api/checkout", checkoutRoutes);
 
 app.use("/api/products", productRoutes);
 
