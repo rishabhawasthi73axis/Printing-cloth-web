@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -8,79 +8,114 @@ import {
   DialogDescription, 
   DialogFooter, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+  DialogTitle 
 } from '@/components/ui/dialog';
 import { PencilLine, Trash, PackagePlus } from 'lucide-react';
-
-// Mock product data - would come from API in real app
-const initialProducts = [
-  { 
-    id: 1, 
-    name: "T-Shirt", 
-    price: 19.99, 
-    inventory: 150, 
-    variants: "S, M, L, XL", 
-    colors: "Black, White, Gray"
-  },
-  { 
-    id: 2, 
-    name: "Hoodie", 
-    price: 39.99, 
-    inventory: 85, 
-    variants: "S, M, L, XL", 
-    colors: "Black, Navy Blue"
-  },
-  { 
-    id: 3, 
-    name: "Cap", 
-    price: 14.99, 
-    inventory: 120, 
-    variants: "One Size", 
-    colors: "Black, White, Red"
-  },
-  { 
-    id: 4, 
-    name: "Long Sleeve Shirt", 
-    price: 24.99, 
-    inventory: 95, 
-    variants: "S, M, L, XL", 
-    colors: "Black, White, Gray"
-  }
-];
+import { useToast } from '@/hooks/use-toast';
+import { productApi, Product } from '@/api/productApi';
 
 const AdminProducts: React.FC = () => {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState<any>(null);
+  const [currentProduct, setCurrentProduct] = useState<Partial<Product> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleAddEdit = (product: any = null) => {
-    setCurrentProduct(product);
+  // Load products when component mounts
+  useEffect(() => {
+    const loadProducts = async () => {
+      setIsLoading(true);
+      try {
+        const allProducts = await productApi.getProducts();
+        setProducts(allProducts);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load products.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadProducts();
+  }, [toast]);
+
+  const handleAddEdit = (product: Product | null = null) => {
+    setCurrentProduct(product || {
+      name: '',
+      price: 0,
+      inventory: 0,
+      variants: '',
+      colors: ''
+    });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setProducts(products.filter(product => product.id !== id));
+  const handleDelete = async (id: string) => {
+    setIsLoading(true);
+    try {
+      const success = await productApi.deleteProduct(id);
+      if (success) {
+        setProducts(products.filter(product => product.id !== id));
+        toast({
+          title: "Product Deleted",
+          description: "The product has been removed successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete the product.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while deleting the product.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentProduct) {
-      if (currentProduct.id) {
+    if (!currentProduct) return;
+    
+    setIsLoading(true);
+    try {
+      if ('id' in currentProduct && currentProduct.id) {
         // Edit existing product
+        const updatedProduct = await productApi.updateProduct(currentProduct as Product);
         setProducts(products.map(p => 
-          p.id === currentProduct.id ? currentProduct : p
+          p.id === updatedProduct.id ? updatedProduct : p
         ));
+        toast({
+          title: "Product Updated",
+          description: "The product has been updated successfully.",
+        });
       } else {
         // Add new product
-        const newProduct = {
-          ...currentProduct,
-          id: Math.max(...products.map(p => p.id), 0) + 1
-        };
+        const newProduct = await productApi.addProduct(currentProduct as Omit<Product, 'id'>);
         setProducts([...products, newProduct]);
+        toast({
+          title: "Product Added",
+          description: "The new product has been added successfully.",
+        });
       }
       setIsDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save the product.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -105,13 +140,17 @@ const AdminProducts: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <Button onClick={() => handleAddEdit()} className="max-w-xs">
+        <Button onClick={() => handleAddEdit()} className="max-w-xs" disabled={isLoading}>
           <PackagePlus className="h-4 w-4 mr-2" />
           Add New Product
         </Button>
       </div>
 
-      {filteredProducts.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Loading products...</p>
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-muted-foreground">No products found</p>
         </div>
@@ -142,6 +181,7 @@ const AdminProducts: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleAddEdit(product)}
+                        disabled={isLoading}
                       >
                         <PencilLine className="h-4 w-4" />
                       </Button>
@@ -149,6 +189,7 @@ const AdminProducts: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(product.id)}
+                        disabled={isLoading}
                       >
                         <Trash className="h-4 w-4 text-destructive" />
                       </Button>
@@ -164,9 +205,9 @@ const AdminProducts: React.FC = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{currentProduct?.id ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+            <DialogTitle>{currentProduct && 'id' in currentProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             <DialogDescription>
-              {currentProduct?.id 
+              {currentProduct && 'id' in currentProduct 
                 ? 'Make changes to the product details.' 
                 : 'Fill in the details for the new product.'}
             </DialogDescription>
@@ -181,6 +222,7 @@ const AdminProducts: React.FC = () => {
                   value={currentProduct?.name || ''}
                   onChange={handleChange}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -194,6 +236,7 @@ const AdminProducts: React.FC = () => {
                     value={currentProduct?.price || ''}
                     onChange={handleChange}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -205,6 +248,7 @@ const AdminProducts: React.FC = () => {
                     value={currentProduct?.inventory || ''}
                     onChange={handleChange}
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -217,6 +261,7 @@ const AdminProducts: React.FC = () => {
                   onChange={handleChange}
                   placeholder="S, M, L, XL"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -228,11 +273,14 @@ const AdminProducts: React.FC = () => {
                   onChange={handleChange}
                   placeholder="Black, White, Red"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit">{currentProduct?.id ? 'Save Changes' : 'Add Product'}</Button>
+              <Button type="submit" disabled={isLoading}>
+                {currentProduct && 'id' in currentProduct ? 'Save Changes' : 'Add Product'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

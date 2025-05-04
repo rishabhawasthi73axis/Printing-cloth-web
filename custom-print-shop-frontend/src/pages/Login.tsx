@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -22,6 +23,9 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
   const { toast } = useToast();
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -30,19 +34,14 @@ const Login: React.FC = () => {
     }
   });
 
-  const onSubmit = (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     console.log('Login attempt:', data);
     
-    // Simulate API call
-    toast({
-      title: "Login Attempted",
-      description: "This is a demo. In a real app, you would be logged in now.",
-    });
+    const success = await login(data.email, data.password);
     
-    // Here you would typically:
-    // 1. Send credentials to your backend
-    // 2. Store the returned token/session
-    // 3. Redirect to a protected page
+    if (success) {
+      navigate('/');
+    }
   };
 
   return (
@@ -90,6 +89,11 @@ const Login: React.FC = () => {
                 </Button>
               </form>
             </Form>
+            <div className="mt-4 text-sm text-center">
+              <p className="text-muted-foreground">
+                For demo: Login as admin with email: admin@example.com, password: admin123
+              </p>
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
             <div className="text-sm text-center text-gray-500">

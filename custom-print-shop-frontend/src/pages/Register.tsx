@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -27,6 +28,9 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 const Register: React.FC = () => {
   const { toast } = useToast();
+  const { register } = useAuth();
+  const navigate = useNavigate();
+  
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -37,19 +41,14 @@ const Register: React.FC = () => {
     }
   });
 
-  const onSubmit = (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     console.log('Registration attempt:', data);
     
-    // Simulate API call
-    toast({
-      title: "Registration Successful",
-      description: "This is a demo. In a real app, your account would be created.",
-    });
+    const success = await register(data.name, data.email, data.password);
     
-    // Here you would typically:
-    // 1. Send registration data to your backend
-    // 2. Store the returned token/session
-    // 3. Redirect to a dashboard or login page
+    if (success) {
+      navigate('/login');
+    }
   };
 
   return (

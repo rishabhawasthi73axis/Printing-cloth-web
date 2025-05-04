@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,70 +18,70 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchIcon, Eye } from "lucide-react";
-
-// Mock order data - would come from API in real app
-const initialOrders = [
-  { 
-    id: "#ORD-1001",
-    customer: "John Smith",
-    email: "john@example.com",
-    date: "2023-05-14",
-    items: [
-      { name: "Custom T-Shirt", quantity: 2, price: 19.99 },
-      { name: "Custom Cap", quantity: 1, price: 14.99 }
-    ],
-    total: 54.97,
-    status: "Delivered"
-  },
-  { 
-    id: "#ORD-1002",
-    customer: "Jane Doe",
-    email: "jane@example.com",
-    date: "2023-05-15",
-    items: [
-      { name: "Hoodie", quantity: 1, price: 39.99 }
-    ],
-    total: 39.99,
-    status: "In Processing"
-  },
-  { 
-    id: "#ORD-1003",
-    customer: "Robert Johnson",
-    email: "robert@example.com",
-    date: "2023-05-16",
-    items: [
-      { name: "Long Sleeve Shirt", quantity: 1, price: 24.99 },
-      { name: "Custom T-Shirt", quantity: 3, price: 19.99 }
-    ],
-    total: 84.96,
-    status: "Shipped"
-  },
-  { 
-    id: "#ORD-1004",
-    customer: "Sarah Williams",
-    email: "sarah@example.com",
-    date: "2023-05-17",
-    items: [
-      { name: "Custom Cap", quantity: 2, price: 14.99 }
-    ],
-    total: 29.98,
-    status: "Pending"
-  }
-];
+import { useToast } from '@/hooks/use-toast';
+import { orderApi, Order } from '@/api/orderApi';
 
 const AdminOrders: React.FC = () => {
-  const [orders, setOrders] = useState(initialOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleStatusChange = (orderId: string, newStatus: string) => {
-    setOrders(orders.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
+  useEffect(() => {
+    // Load orders when component mounts
+    const loadOrders = async () => {
+      setIsLoading(true);
+      try {
+        const allOrders = await orderApi.getOrders();
+        setOrders(allOrders);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load orders.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadOrders();
+  }, [toast]);
+
+  const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
+    setIsLoading(true);
+    try {
+      const updatedOrder = await orderApi.updateOrderStatus(orderId, newStatus);
+      if (updatedOrder) {
+        setOrders(orders.map(order => 
+          order.id === orderId ? updatedOrder : order
+        ));
+        
+        if (selectedOrder && selectedOrder.id === orderId) {
+          setSelectedOrder(updatedOrder);
+        }
+        
+        toast({
+          title: "Order Updated",
+          description: `Order ${orderId} status changed to ${newStatus}.`,
+        });
+      } else {
+        throw new Error("Failed to update order status");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update order status.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleViewDetails = (order: any) => {
+  const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsOrderDetailsOpen(true);
   };
@@ -96,6 +96,8 @@ const AdminOrders: React.FC = () => {
         return <Badge className="bg-yellow-500">In Processing</Badge>;
       case 'Pending':
         return <Badge className="bg-gray-500">Pending</Badge>;
+      case 'Canceled':
+        return <Badge className="bg-red-500">Canceled</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -121,7 +123,11 @@ const AdminOrders: React.FC = () => {
         </div>
       </div>
 
-      {filteredOrders.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Loading orders...</p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-muted-foreground">No orders found</p>
         </div>
@@ -155,7 +161,8 @@ const AdminOrders: React.FC = () => {
                     <div className="flex space-x-2 items-center">
                       <Select 
                         defaultValue={order.status}
-                        onValueChange={(value) => handleStatusChange(order.id, value)}
+                        onValueChange={(value) => handleStatusChange(order.id, value as Order['status'])}
+                        disabled={isLoading}
                       >
                         <SelectTrigger className="w-[140px]">
                           <SelectValue placeholder="Status" />
@@ -172,6 +179,7 @@ const AdminOrders: React.FC = () => {
                         variant="ghost" 
                         size="sm"
                         onClick={() => handleViewDetails(order)}
+                        disabled={isLoading}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -209,7 +217,7 @@ const AdminOrders: React.FC = () => {
               <div className="mt-6">
                 <h4 className="font-semibold text-sm mb-3">Order Items</h4>
                 <div className="bg-muted/30 rounded p-3">
-                  {selectedOrder.items.map((item: any, index: number) => (
+                  {selectedOrder.items.map((item, index) => (
                     <div key={index} className="flex justify-between py-2 border-b last:border-0">
                       <span>
                         {item.quantity}x {item.name}

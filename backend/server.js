@@ -1,28 +1,37 @@
-import express from "express";
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import cors from "cors";
-import productRoutes from "./routes/product.js";
-import authRoutes from "./routes/auth.js";
-import checkoutRoutes from "./routes/checkout.js";
-import orderRoutes from "./routes/order.js";
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import connectDB from './config/connectDB.js';
+import { notFound, errorHandler } from './middlewares/errorMiddleware.js';
+import userRoutes from './routes/userRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
 
-
-app.use("/api/orders", orderRoutes);
-app.use("/api/checkout", checkoutRoutes);
-
-app.use("/api/products", productRoutes);
-
+// Load env vars
 dotenv.config();
+
+// Connect to database
+connectDB();
+
 const app = express();
-app.use(cors());
+
+// Body parser
 app.use(express.json());
 
-app.use("/api/auth", authRoutes);
+// Enable CORS
+app.use(cors());
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error(err));
+// Define Routes
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+
+// Error Middleware
+app.use(notFound);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+
+app.listen(PORT, () => {
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+});

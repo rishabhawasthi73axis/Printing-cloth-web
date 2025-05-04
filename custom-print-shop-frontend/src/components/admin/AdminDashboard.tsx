@@ -1,16 +1,39 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowUp, ArrowDown, ShoppingBag, Package, User } from 'lucide-react';
+import { getProducts } from '@/services/productService';
+import { getOrders } from '@/services/orderService';
+import { getUsers } from '@/services/authService';
 
 const AdminDashboard: React.FC = () => {
-  // This would normally come from your API
-  const stats = {
-    revenue: 12450,
-    orders: 42,
-    products: 24,
-    customers: 156
-  };
+  const [stats, setStats] = useState({
+    revenue: 0,
+    orders: 0,
+    products: 0,
+    customers: 0
+  });
+
+  useEffect(() => {
+    // Load data when component mounts
+    const loadData = () => {
+      const orders = getOrders();
+      const products = getProducts();
+      const users = getUsers();
+      
+      // Calculate total revenue from orders
+      const revenue = orders.reduce((total, order) => total + order.total, 0);
+      
+      setStats({
+        revenue,
+        orders: orders.length,
+        products: products.length,
+        customers: users.filter(user => !user.isAdmin).length
+      });
+    };
+    
+    loadData();
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -25,7 +48,7 @@ const AdminDashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.revenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${stats.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
             <p className="text-xs text-muted-foreground flex items-center space-x-1">
               <span className="text-green-500 flex items-center">
                 <ArrowUp className="h-3 w-3 mr-1" />18.2%
@@ -98,21 +121,21 @@ const AdminDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((order) => (
-                <div key={order} className="flex items-center justify-between border-b pb-2">
+              {getOrders().slice(0, 5).map((order) => (
+                <div key={order.id} className="flex items-center justify-between border-b pb-2">
                   <div>
-                    <p className="font-medium">Order #{1000 + order}</p>
+                    <p className="font-medium">{order.id}</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(2023, 5, order).toLocaleDateString()}
+                      {order.date}
                     </p>
                   </div>
                   <div>
-                    <span className="bg-green-100 text-green-800 text-xs px-2.5 py-0.5 rounded">
-                      Completed
+                    <span className={`${order.status === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'} text-xs px-2.5 py-0.5 rounded`}>
+                      {order.status}
                     </span>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">${(Math.random() * 200 + 50).toFixed(2)}</p>
+                    <p className="font-medium">${order.total.toFixed(2)}</p>
                   </div>
                 </div>
               ))}
@@ -130,14 +153,14 @@ const AdminDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {["Custom T-Shirt", "Hoodie", "Cap", "Long Sleeve Shirt", "Sweatshirt"].map((product, idx) => (
-                <div key={idx} className="flex items-center justify-between border-b pb-2">
+              {getProducts().slice(0, 5).map((product) => (
+                <div key={product.id} className="flex items-center justify-between border-b pb-2">
                   <div className="flex items-center">
                     <div className="w-10 h-10 rounded bg-gray-200 mr-3"></div>
-                    <p className="font-medium">{product}</p>
+                    <p className="font-medium">{product.name}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">${(Math.random() * 40 + 10).toFixed(2)}</p>
+                    <p className="font-medium">${product.price.toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">{Math.floor(Math.random() * 100)} sold</p>
                   </div>
                 </div>
