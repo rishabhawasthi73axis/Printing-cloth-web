@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 
-const generateToken = (id) => {
+const generateToken = (id, isAdmin = false) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: isAdmin ? '7d' : '24h', // Longer expiration for admins
   });
 };
+
 
 export default generateToken;

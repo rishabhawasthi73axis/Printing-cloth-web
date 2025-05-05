@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,8 @@ const Login: React.FC = () => {
   const { toast } = useToast();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdmin = location.pathname === '/admin/login' || location.search.includes('admin=true');
   
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -35,12 +37,46 @@ const Login: React.FC = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log('Login attempt:', data);
+    console.log('Login attempt:', data, 'isAdmin:', isAdmin);
     
-    const success = await login(data.email, data.password);
-    
-    if (success) {
-      navigate('/');
+    try {
+      const success = await login(data.email, data.password);
+      
+      if (success) {
+        const userJson = localStorage.getItem('currentUser');
+        if (!userJson) {
+          toast({
+            title: "Login Error",
+            description: "User data not found",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const { isAdmin: userIsAdmin } = JSON.parse(userJson);
+        
+        if (isAdmin && !userIsAdmin) {
+          toast({
+            title: "Access Denied",
+            description: "This account doesn't have admin privileges",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        if (isAdmin && userIsAdmin) {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -50,9 +86,13 @@ const Login: React.FC = () => {
       <main className="flex-grow flex items-center justify-center py-12 px-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">
+              {isAdmin ? "Admin Login" : "Login"}
+            </CardTitle>
             <CardDescription className="text-center">
-              Enter your email and password to access your account
+              {isAdmin 
+                ? "Enter your admin credentials to access the dashboard" 
+                : "Enter your email and password to access your account"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -85,24 +125,34 @@ const Login: React.FC = () => {
                   )}
                 />
                 <Button type="submit" className="w-full">
-                  <LogIn className="mr-2 h-4 w-4" /> Sign In
+                  <LogIn className="mr-2 h-4 w-4" /> {isAdmin ? "Admin Sign In" : "Sign In"}
                 </Button>
               </form>
             </Form>
-            <div className="mt-4 text-sm text-center">
-              <p className="text-muted-foreground">
-                For demo: Login as admin with email: admin@example.com, password: admin123
-              </p>
-            </div>
+            {isAdmin ? (
+              <div className="mt-4 text-sm text-center">
+                <p className="text-muted-foreground">
+                  For demo: Login as admin with email: admin@example.com, password: admin123
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 text-sm text-center">
+                <p className="text-muted-foreground">
+                  For demo: Login with email: user@example.com, password: user123
+                </p>
+              </div>
+            )}
           </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <div className="text-sm text-center text-gray-500">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-primary hover:underline">
-                Register here
-              </Link>
-            </div>
-          </CardFooter>
+          {!isAdmin && (
+            <CardFooter className="flex flex-col space-y-2">
+              <div className="text-sm text-center text-gray-500">
+                Don't have an account?{" "}
+                <Link to="/register" className="text-primary hover:underline">
+                  Register here
+                </Link>
+              </div>
+            </CardFooter>
+          )}
         </Card>
       </main>
       <Footer />

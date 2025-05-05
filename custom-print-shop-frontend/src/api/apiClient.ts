@@ -30,11 +30,26 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle errors centrally (e.g., redirect to login on 401)
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('currentUser');
-      // Redirect to login could be done here
+    // Handle errors centrally
+    if (error.response) {
+      if (error.response.status === 401) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        
+        // Check if we're on an admin route
+        const isAdminRoute = window.location.pathname.startsWith('/admin');
+        if (isAdminRoute) {
+          window.location.href = '/admin/login';
+        }
+      }
+      
+      if (error.response.status === 403) {
+        // Forbidden - typically means not admin
+        const isAdminRoute = window.location.pathname.startsWith('/admin');
+        if (isAdminRoute) {
+          window.location.href = '/';
+        }
+      }
     }
     return Promise.reject(error);
   }

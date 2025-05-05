@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useCart, CartProduct } from '@/contexts/CartContext';
 import { formatCurrency, convertUSDtoINR } from '@/utils/currencyFormatter';
-import { useWishlist } from '@/contexts/WishlistContext';
 import { Heart } from 'lucide-react';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 interface ProductProps {
   id: string;
@@ -15,7 +15,8 @@ interface ProductProps {
   category: string;
 }
 
-const products: ProductProps[] = [
+// Sample product data - in a real app, this would come from an API
+const allProducts: ProductProps[] = [
   {
     id: '1',
     name: 'Premium Cotton T-Shirt',
@@ -43,6 +44,34 @@ const products: ProductProps[] = [
     price: 14.99,
     image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80',
     category: 'mugs'
+  },
+  {
+    id: '5',
+    name: 'Graphic Print T-Shirt',
+    price: 29.99,
+    image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80',
+    category: 't-shirts'
+  },
+  {
+    id: '6',
+    name: 'Zip-Up Hoodie',
+    price: 49.99,
+    image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80',
+    category: 'hoodies'
+  },
+  {
+    id: '7',
+    name: 'Travel Mug',
+    price: 18.99,
+    image: 'https://images.unsplash.com/photo-1577937927133-88c8300a3399?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80',
+    category: 'mugs'
+  },
+  {
+    id: '8',
+    name: 'Trucker Cap',
+    price: 16.99,
+    image: 'https://images.unsplash.com/photo-1575428652377-a2d80e2277fc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80',
+    category: 'caps'
   }
 ];
 
@@ -101,24 +130,22 @@ const ProductCard: React.FC<{ product: ProductProps }> = ({ product }) => {
   );
 };
 
-const FeaturedProducts: React.FC = () => {
+interface ProductGridProps {
+  category?: string;
+}
+
+const ProductGrid: React.FC<ProductGridProps> = ({ category }) => {
+  const filteredProducts = category 
+    ? allProducts.filter(product => product.category === category) 
+    : allProducts;
+
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold">Featured Products</h2>
-          <Link to="/products" className="text-primary hover:underline">
-            View All Products →
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </div>
-    </section>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {filteredProducts.map((product) => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
   );
 };
 
-export default FeaturedProducts;
+export default ProductGrid;

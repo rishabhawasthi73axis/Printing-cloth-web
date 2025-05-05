@@ -6,7 +6,7 @@ import asyncHandler from 'express-async-handler';
 // @desc    Register a new user
 // @route   POST /api/users
 // @access  Public
-export const registerUser = asyncHandler(async (req, res) => {
+const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
   const userExists = await User.findOne({ email });
@@ -36,7 +36,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 // @desc    Auth user & get token
 // @route   POST /api/users/login
 // @access  Public
-export const loginUser = asyncHandler(async (req, res) => {
+const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -49,7 +49,7 @@ export const loginUser = asyncHandler(async (req, res) => {
         email: user.email,
         isAdmin: user.isAdmin,
       },
-      token: generateToken(user._id),
+      token: generateToken(user._id, user.isAdmin), // Pass isAdmin flag
     });
   } else {
     res.status(401);
@@ -60,7 +60,7 @@ export const loginUser = asyncHandler(async (req, res) => {
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
-export const getUserProfile = asyncHandler(async (req, res) => {
+const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user) {
@@ -75,3 +75,5 @@ export const getUserProfile = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 });
+
+export { registerUser, loginUser, getUserProfile };

@@ -2,13 +2,12 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminOrders from '@/components/admin/AdminOrders';
 import AdminProducts from '@/components/admin/AdminProducts';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import { useToast } from '@/hooks/use-toast';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { Package, ShoppingBag, PencilLine } from "lucide-react";
+import { Users, Package, ShoppingBag, PencilLine } from "lucide-react";
 
 const Admin: React.FC = () => {
   const { toast } = useToast();
@@ -29,17 +28,17 @@ const Admin: React.FC = () => {
                     <SidebarMenuButton 
                       isActive={activeTab === "dashboard"}
                       onClick={() => setActiveTab("dashboard")}
-                      tooltip="Dashboard"
+                      tooltip="User Activities"
                     >
-                      <PencilLine />
-                      <span>Dashboard</span>
+                      <Users />
+                      <span>User Activities</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton 
                       isActive={activeTab === "products"}
                       onClick={() => setActiveTab("products")}
-                      tooltip="Products"
+                      tooltip="Product Management"
                     >
                       <Package />
                       <span>Products</span>
@@ -49,7 +48,7 @@ const Admin: React.FC = () => {
                     <SidebarMenuButton 
                       isActive={activeTab === "orders"}
                       onClick={() => setActiveTab("orders")}
-                      tooltip="Orders"
+                      tooltip="Order Management"
                     >
                       <ShoppingBag />
                       <span>Orders</span>
