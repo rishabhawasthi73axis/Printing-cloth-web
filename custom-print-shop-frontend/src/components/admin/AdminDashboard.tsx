@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowUp, ArrowDown, ShoppingBag, Package, User, Users, Heart } from 'lucide-react';
 import { getProducts } from '@/services/productService';
 import { getOrders } from '@/services/orderService';
@@ -13,46 +13,49 @@ const AdminDashboard: React.FC = () => {
     products: 0,
     customers: 0,
     activeUsers: 0,
-    favorites: 0
+    favorites: 10
   });
 
   useEffect(() => {
     // Load data when component mounts
     const loadData = () => {
-      const orders = getOrders();
-      const products = getProducts();
-      const users = getUsers();
-      
-      // Calculate total revenue from orders
-      const revenue = orders.reduce((total, order) => total + order.total, 0);
-      
-      // For demonstration purposes, we'll simulate active users and favorites counts
-      const activeUsers = Math.floor(users.length * 0.7); // 70% of users are "active"
-      const favorites = Math.floor(products.length * 2.5); // Assume average favorites count
-      
-      setStats({
-        revenue,
-        orders: orders.length,
-        products: products.length,
-        customers: users.filter(user => !user.isAdmin).length,
-        activeUsers,
-        favorites
-      });
+      try {
+        const orders = getOrders();
+        const products = getProducts();
+        const users = getUsers();
+        
+        // Calculate total revenue from orders
+        const revenue = orders.reduce((total, order) => total + order.total, 0);
+        
+        // For demonstration purposes, we'll simulate active users and favorites counts
+        const activeUsers = Math.floor(users.length * 0.7); // 70% of users are "active"
+        
+        setStats({
+          revenue,
+          orders: orders.length,
+          products: products.length,
+          customers: users.filter(user => !user.isAdmin).length,
+          activeUsers,
+          favorites: 10
+        });
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      }
     };
     
     loadData();
   }, []);
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-semibold">User Activities Overview</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold">Dashboard Overview</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-primary">$</span>
+            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <span className="text-blue-600">$</span>
             </div>
           </CardHeader>
           <CardContent>
@@ -66,11 +69,11 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Orders</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-secondary/10 flex items-center justify-center">
-              <ShoppingBag className="h-4 w-4 text-secondary" />
+            <div className="h-8 w-8 rounded-full bg-cyan-100 flex items-center justify-center">
+              <ShoppingBag className="h-4 w-4 text-cyan-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -84,11 +87,11 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Products</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Package className="h-4 w-4 text-primary" />
+            <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+              <Package className="h-4 w-4 text-indigo-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -102,11 +105,11 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-secondary/10 flex items-center justify-center">
-              <Users className="h-4 w-4 text-secondary" />
+            <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
+              <Users className="h-4 w-4 text-teal-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -120,7 +123,7 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
             <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
@@ -138,7 +141,7 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Favorites</CardTitle>
             <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
@@ -157,43 +160,10 @@ const AdminDashboard: React.FC = () => {
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Recent User Activities</CardTitle>
-            <CardDescription>Latest user interactions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {getUsers().filter(u => !u.isAdmin).slice(0, 5).map((user, index) => (
-                <div key={index} className="flex items-center justify-between border-b pb-2">
-                  <div>
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded">
-                      {['Logged in', 'Viewed products', 'Updated profile', 'Added to cart', 'Checked out'][index % 5]}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">{new Date().toLocaleDateString()}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter>
-            <button className="text-primary text-sm hover:underline">View all activities</button>
-          </CardFooter>
-        </Card>
-        
-        <Card className="col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-4">
+        <Card className="bg-white">
           <CardHeader>
             <CardTitle>Popular Products</CardTitle>
-            <CardDescription>Most viewed by users</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -211,9 +181,6 @@ const AdminDashboard: React.FC = () => {
               ))}
             </div>
           </CardContent>
-          <CardFooter>
-            <button className="text-primary text-sm hover:underline">View all products</button>
-          </CardFooter>
         </Card>
       </div>
     </div>

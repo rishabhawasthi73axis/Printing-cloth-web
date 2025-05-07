@@ -30,9 +30,15 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle errors centrally
+    // Handle network errors gracefully without redirecting automatically
     if (error.response) {
-      if (error.response.status === 401) {
+      console.log('API error response:', error.response.status, error.response.data);
+      
+      // Only handle unauthorized errors with redirection if not on login pages
+      const isLoginPage = window.location.pathname.includes('/login');
+      
+      if (error.response.status === 401 && !isLoginPage) {
+        console.log('Unauthorized access detected, clearing auth data');
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
         
@@ -43,7 +49,8 @@ apiClient.interceptors.response.use(
         }
       }
       
-      if (error.response.status === 403) {
+      if (error.response.status === 403 && !isLoginPage) {
+        console.log('Forbidden access detected');
         // Forbidden - typically means not admin
         const isAdminRoute = window.location.pathname.startsWith('/admin');
         if (isAdminRoute) {
@@ -51,6 +58,8 @@ apiClient.interceptors.response.use(
         }
       }
     }
+    
+    // Always propagate the error to allow components to handle it
     return Promise.reject(error);
   }
 );
@@ -76,6 +85,7 @@ export async function fetchApi<T>(
     const response = await apiClient(endpoint, config);
     return response.data;
   } catch (error: any) {
+    // Allow errors to be handled by components
     console.error('API request failed:', error);
     throw error.response?.data?.message || error.message || 'API request failed';
   }

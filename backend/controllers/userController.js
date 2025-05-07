@@ -57,6 +57,32 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Check admin credentials
+// @route   POST /api/users/admin/auth
+// @access  Public
+const checkAdminCredentials = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Find user by email
+  const user = await User.findOne({ email });
+
+  // Check if user exists and is an admin
+  if (user && user.isAdmin && (await user.matchPassword(password))) {
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
+      token: generateToken(user._id, user.isAdmin),
+    });
+  } else {
+    res.status(401);
+    throw new Error('Invalid admin credentials');
+  }
+});
+
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
@@ -76,4 +102,5 @@ const getUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, getUserProfile };
+
+export { registerUser, loginUser, getUserProfile, checkAdminCredentials };

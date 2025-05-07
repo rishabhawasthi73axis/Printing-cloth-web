@@ -29,7 +29,23 @@ interface RegisterResponse {
   success: boolean;
   message: string;
 }
-
+      // Check if it's the demo admin account
+      // if (credentials.email === 'admin@example.com' && credentials.password === 'admin123') {
+      //   console.log("Admin demo login successful");
+      //   const adminUser = {
+      //     id: 'admin-1',
+      //     name: 'Admin User',
+      //     email: 'admin@example.com',
+      //     isAdmin: true
+      //   };
+        
+        // const mockResponse = {
+        //   user: adminUser,
+        //   token: 'admin-demo-token'
+        // };
+        
+      //   return Promise.resolve(mockResponse);
+      // }
 // Auth API methods
 export const authApi = {
   // Login user

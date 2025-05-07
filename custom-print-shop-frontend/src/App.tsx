@@ -53,7 +53,7 @@ const App = () => (
                 <Route path="/products/:category/:productId" element={<ProductDetail />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 
-                {/* Admin routes - separate from user routes */}
+                {/* Admin routes with improved protection */}
                 <Route path="/admin" element={
                   <ProtectedRoute requireAdmin>
                     <Admin />
@@ -61,6 +61,11 @@ const App = () => (
                 } />
                 <Route path="/admin/login" element={<Login />} />
                 <Route path="/admin/setup" element={<AdminSetup />} />
+                <Route path="/admin/*" element={
+                  <ProtectedRoute requireAdmin>
+                    <Admin />
+                  </ProtectedRoute>
+                } />
                 
                 {/* User routes */}
                 <Route path="/cart" element={<Cart />} />
