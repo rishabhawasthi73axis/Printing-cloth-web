@@ -1,5 +1,6 @@
 
 import { fetchApi } from './apiClient';
+import { convertUSDtoINR, formatCurrency } from '@/utils/currencyFormatter';
 
 export interface OrderItem {
   name: string;
@@ -29,18 +30,32 @@ export const orderApi = {
   // Get all orders
   async getOrders(): Promise<Order[]> {
     const orders = await fetchApi<Order[]>('/orders');
+    
+    // Convert all prices to INR and format dates
     return orders.map(order => ({
       ...order,
-      date: new Date(order.date || Date.now()).toISOString().split('T')[0]
+      date: new Date(order.date || Date.now()).toISOString().split('T')[0],
+      total: convertUSDtoINR(order.total),
+      items: order.items.map(item => ({
+        ...item,
+        price: convertUSDtoINR(item.price)
+      }))
     }));
   },
 
   // Get order by ID
   async getOrderById(id: string): Promise<Order> {
     const order = await fetchApi<Order>(`/orders/${id}`);
+    
+    // Convert all prices to INR
     return {
       ...order,
-      date: new Date(order.date || Date.now()).toISOString().split('T')[0]
+      date: new Date(order.date || Date.now()).toISOString().split('T')[0],
+      total: convertUSDtoINR(order.total),
+      items: order.items.map(item => ({
+        ...item,
+        price: convertUSDtoINR(item.price)
+      }))
     };
   },
 
@@ -51,9 +66,15 @@ export const orderApi = {
       body: orderData,
     });
     
+    // Convert all prices to INR
     return {
       ...order,
-      date: new Date(order.date || Date.now()).toISOString().split('T')[0]
+      date: new Date(order.date || Date.now()).toISOString().split('T')[0],
+      total: convertUSDtoINR(order.total),
+      items: order.items.map(item => ({
+        ...item,
+        price: convertUSDtoINR(item.price)
+      }))
     };
   },
 
@@ -64,9 +85,15 @@ export const orderApi = {
       body: { status },
     });
     
+    // Convert all prices to INR
     return {
       ...order,
-      date: new Date(order.date || Date.now()).toISOString().split('T')[0]
+      date: new Date(order.date || Date.now()).toISOString().split('T')[0],
+      total: convertUSDtoINR(order.total),
+      items: order.items.map(item => ({
+        ...item,
+        price: convertUSDtoINR(item.price)
+      }))
     };
   }
 };

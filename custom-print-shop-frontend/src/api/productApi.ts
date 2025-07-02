@@ -9,6 +9,9 @@ export interface Product {
   inventory: number;
   variants: string;
   colors: string;
+  description?: string;
+  category?: string;
+  image?: string;
 }
 
 export interface CreateProductInput {
@@ -17,6 +20,9 @@ export interface CreateProductInput {
   inventory: number;
   variants: string;
   colors: string;
+  description?: string;
+  category?: string;
+  image?: string;
 }
 
 // Product API methods
@@ -48,9 +54,10 @@ export const productApi = {
   },
 
   // Delete a product
-  async deleteProduct(id: string): Promise<{ message: string }> {
-    return await fetchApi<{ message: string }>(`/products/${id}`, {
+  async deleteProduct(id: string): Promise<boolean> {
+    const response = await fetchApi<{ message: string }>(`/products/${id}`, {
       method: 'DELETE',
     });
+    return !!response;
   }
 };

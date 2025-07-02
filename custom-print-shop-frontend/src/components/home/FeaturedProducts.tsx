@@ -3,9 +3,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useCart, CartProduct } from '@/contexts/CartContext';
-import { formatCurrency, convertUSDtoINR } from '@/utils/currencyFormatter';
+import { formatCurrency, ensurePriceInINR } from '@/utils/currencyFormatter';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { Heart } from 'lucide-react';
+import { Heart, IndianRupee } from 'lucide-react';
 
 interface ProductProps {
   id: string;
@@ -62,8 +62,8 @@ const ProductCard: React.FC<{ product: ProductProps }> = ({ product }) => {
     addToCart(cartProduct);
   };
 
-  // Convert price to INR for display
-  const priceInINR = convertUSDtoINR(product.price);
+  // Ensure price is in INR
+  const priceInINR = ensurePriceInINR(product.price);
   const formattedPrice = formatCurrency(priceInINR);
 
   return (
@@ -89,7 +89,10 @@ const ProductCard: React.FC<{ product: ProductProps }> = ({ product }) => {
             {product.name}
           </h3>
         </Link>
-        <p className="text-gray-700 mb-2">{formattedPrice}</p>
+        <p className="text-gray-700 mb-2 flex items-center">
+          <IndianRupee className="h-4 w-4 mr-1" />
+          {formattedPrice}
+        </p>
         <div className="flex justify-between items-center pt-2">
           <Link to={`/custom-designer?product=${product.id}`}>
             <Button variant="outline" size="sm">Customize</Button>

@@ -20,6 +20,7 @@ import {
 import { SearchIcon, Eye } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { orderApi, Order } from '@/api/orderApi';
+import { formatCurrency } from '@/utils/currencyFormatter';
 
 const AdminOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -155,7 +156,7 @@ const AdminOrders: React.FC = () => {
                     </div>
                   </td>
                   <td className="p-3">{order.date}</td>
-                  <td className="p-3">${order.total.toFixed(2)}</td>
+                  <td className="p-3">{formatCurrency(order.total)}</td>
                   <td className="p-3">{getStatusBadge(order.status)}</td>
                   <td className="p-3">
                     <div className="flex space-x-2 items-center">
@@ -222,12 +223,12 @@ const AdminOrders: React.FC = () => {
                       <span>
                         {item.quantity}x {item.name}
                       </span>
-                      <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-medium">{formatCurrency(item.price * item.quantity)}</span>
                     </div>
                   ))}
                   <div className="flex justify-between pt-4 font-bold">
                     <span>Total</span>
-                    <span>${selectedOrder.total.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedOrder.total)}</span>
                   </div>
                 </div>
               </div>

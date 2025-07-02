@@ -1,13 +1,15 @@
 
-import React, { useState } from 'react';
-import { Upload } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 interface ProductInfo {
   id: string;
   name: string;
   price: number;
   image: string;
+  category?: string;
 }
 
 interface DesignCanvasProps {
@@ -22,6 +24,8 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ selectedProduct }) => {
   const [designScale, setDesignScale] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -62,6 +66,29 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ selectedProduct }) => {
     setIsDragging(false);
   };
 
+  const saveDesign = () => {
+    if (!canvasRef.current || !selectedProduct) return;
+    
+    // Create a message to show what would be saved in a real implementation
+    const designDetails = {
+      product: selectedProduct.name,
+      hasCustomImage: !!uploadedImage,
+      hasCustomText: !!designText,
+      textColor: designText ? textColor : 'none',
+      scale: designScale
+    };
+    
+    console.log('Saving design:', designDetails);
+    
+    toast({
+      title: "Design saved!",
+      description: `Your custom design for ${selectedProduct.name} has been saved.`,
+      duration: 3000,
+    });
+    
+    // In a real app, this would save the design to the database or localStorage
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-5">
       <h3 className="text-xl font-semibold mb-4">Customize Your Design</h3>
@@ -74,7 +101,8 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ selectedProduct }) => {
         <>
           <div 
             id="design-preview"
-            className="relative bg-gray-100 min-h-[300px] flex items-center justify-center mb-4 rounded-md"
+            ref={canvasRef}
+            className="relative bg-gray-100 min-h-[400px] flex items-center justify-center mb-4 rounded-md overflow-hidden"
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
@@ -82,7 +110,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ selectedProduct }) => {
             <img 
               src={selectedProduct.image}
               alt={selectedProduct.name}
-              className="max-h-[300px] object-contain"
+              className="max-h-[350px] max-w-full object-contain"
             />
             
             {uploadedImage && (
@@ -97,7 +125,7 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ selectedProduct }) => {
                 <img 
                   src={uploadedImage}
                   alt="Custom design"
-                  className="max-w-[150px] max-h-[150px]"
+                  className="max-w-[150px] max-h-[150px] object-contain"
                 />
               </div>
             )}
@@ -185,7 +213,10 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ selectedProduct }) => {
             >
               Reset Design
             </Button>
-            <Button>Save Design</Button>
+            <Button onClick={saveDesign}>
+              <Download className="w-4 h-4 mr-2" />
+              Save Design
+            </Button>
           </div>
         </>
       )}

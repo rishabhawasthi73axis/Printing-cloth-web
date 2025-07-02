@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/utils/currencyFormatter';
 
 interface ProductInfo {
   id: string;
@@ -55,7 +56,7 @@ const CustomizerSidebar: React.FC<SidebarProps> = ({ selectedProduct, onAddToCar
       
       <div className="mb-4">
         <h4 className="font-medium">{selectedProduct.name}</h4>
-        <p className="text-gray-700">${selectedProduct.price.toFixed(2)}</p>
+        <p className="text-gray-700">{formatCurrency(totalPrice)}</p>
       </div>
       
       {(selectedProduct.category === 't-shirts' || selectedProduct.category === 'hoodies') && (
@@ -127,7 +128,7 @@ const CustomizerSidebar: React.FC<SidebarProps> = ({ selectedProduct, onAddToCar
       <div className="mb-5">
         <div className="flex justify-between text-lg font-semibold">
           <span>Total:</span>
-          <span>${totalPrice.toFixed(2)}</span>
+          <span>{formatCurrency(totalPrice)}</span>
         </div>
       </div>
       

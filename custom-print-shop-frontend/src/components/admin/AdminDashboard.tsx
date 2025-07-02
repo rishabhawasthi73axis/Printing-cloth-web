@@ -1,10 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUp, ArrowDown, ShoppingBag, Package, User, Users, Heart } from 'lucide-react';
+import { ArrowUp, ArrowDown, ShoppingBag, Package, User, Users, Heart, IndianRupee } from 'lucide-react';
 import { getProducts } from '@/services/productService';
 import { getOrders } from '@/services/orderService';
 import { getUsers } from '@/services/authService';
+import { formatCurrency } from '@/utils/currencyFormatter';
 
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState({
@@ -36,7 +37,7 @@ const AdminDashboard: React.FC = () => {
           products: products.length,
           customers: users.filter(user => !user.isAdmin).length,
           activeUsers,
-          favorites: 10
+          favorites: orders.reduce((total, order) => total + (order.items ? order.items.length : 0), 0)
         });
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
@@ -55,11 +56,11 @@ const AdminDashboard: React.FC = () => {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-600">$</span>
+              <IndianRupee className="h-4 w-4 text-blue-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            <div className="text-2xl font-bold">{formatCurrency(stats.revenue)}</div>
             <p className="text-xs text-muted-foreground flex items-center space-x-1">
               <span className="text-green-500 flex items-center">
                 <ArrowUp className="h-3 w-3 mr-1" />18.2%
@@ -174,7 +175,7 @@ const AdminDashboard: React.FC = () => {
                     <p className="font-medium">{product.name}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">${product.price.toFixed(2)}</p>
+                    <p className="font-medium">{formatCurrency(product.price)}</p>
                     <p className="text-xs text-muted-foreground">{Math.floor(Math.random() * 100)} views</p>
                   </div>
                 </div>

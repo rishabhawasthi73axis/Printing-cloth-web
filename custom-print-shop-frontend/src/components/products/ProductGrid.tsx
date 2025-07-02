@@ -1,11 +1,14 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useCart, CartProduct } from '@/contexts/CartContext';
-import { formatCurrency, convertUSDtoINR } from '@/utils/currencyFormatter';
-import { Heart } from 'lucide-react';
+import { formatCurrency, ensurePriceInINR } from '@/utils/currencyFormatter';
+import { Heart, Search, IndianRupee } from 'lucide-react';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { productApi } from '@/api/productApi';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductProps {
   id: string;
@@ -79,6 +82,7 @@ const ProductCard: React.FC<{ product: ProductProps }> = ({ product }) => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const inWishlist = isInWishlist(product.id);
+  const { toast } = useToast();
 
   const handleAddToCart = () => {
     const cartProduct: CartProduct = {
@@ -89,10 +93,14 @@ const ProductCard: React.FC<{ product: ProductProps }> = ({ product }) => {
       image: product.image
     };
     addToCart(cartProduct);
+    toast({
+      title: "Added to Cart",
+      description: `${product.name} has been added to your cart.`,
+    });
   };
 
-  // Convert price to INR for display
-  const priceInINR = convertUSDtoINR(product.price);
+  // Ensure price is in INR
+  const priceInINR = ensurePriceInINR(product.price);
   const formattedPrice = formatCurrency(priceInINR);
 
   return (
@@ -118,7 +126,10 @@ const ProductCard: React.FC<{ product: ProductProps }> = ({ product }) => {
             {product.name}
           </h3>
         </Link>
-        <p className="text-gray-700 mb-2">{formattedPrice}</p>
+        <p className="text-gray-700 mb-2 flex items-center">
+          <IndianRupee className="h-4 w-4 mr-1" />
+          {formattedPrice}
+        </p>
         <div className="flex justify-between items-center pt-2">
           <Link to={`/custom-designer?product=${product.id}`}>
             <Button variant="outline" size="sm">Customize</Button>
@@ -132,18 +143,98 @@ const ProductCard: React.FC<{ product: ProductProps }> = ({ product }) => {
 
 interface ProductGridProps {
   category?: string;
+  searchTerm?: string;
 }
 
-const ProductGrid: React.FC<ProductGridProps> = ({ category }) => {
-  const filteredProducts = category 
-    ? allProducts.filter(product => product.category === category) 
-    : allProducts;
+const ProductGrid: React.FC<ProductGridProps> = ({ category, searchTerm = '' }) => {
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [products, setProducts] = useState<ProductProps[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+  
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        // Try to get products from API, fall back to sample data
+        try {
+          const apiProducts = await productApi.getProducts();
+          if (apiProducts && apiProducts.length > 0) {
+            setProducts(apiProducts.map(p => ({
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              image: p.image || 'https://placehold.co/500x500?text=Product+Image',
+              category: p.category || 't-shirts'
+            })));
+            return;
+          }
+        } catch (error) {
+          console.log('Failed to fetch products from API, using sample data');
+        }
+        
+        // Fallback to sample data
+        setProducts(allProducts);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load products. Please try again.",
+          variant: "destructive"
+        });
+        setProducts(allProducts);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, [toast]);
+
+  // Filter products by category and search term
+  const filteredProducts = products
+    .filter(product => !category || product.category === category)
+    .filter(product => 
+      product.name.toLowerCase().includes(localSearchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(localSearchTerm.toLowerCase())
+    );
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {filteredProducts.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
+    <div>
+      {!searchTerm && (
+        <div className="mb-6">
+          <div className="relative">
+            <Input
+              type="search"
+              placeholder="Search products..."
+              className="pl-10 pr-4 py-2"
+              value={localSearchTerm}
+              onChange={(e) => setLocalSearchTerm(e.target.value)}
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          </div>
+        </div>
+      )}
+      
+      {loading ? (
+        <div className="text-center py-10">
+          <p className="text-lg text-gray-600">Loading products...</p>
+        </div>
+      ) : filteredProducts.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-10">
+          <p className="text-lg text-gray-600">No products found matching your search.</p>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { authApi, LoginRequest } from '@/api/authApi';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -23,16 +24,27 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = location.pathname === '/admin/login' || location.search.includes('admin=true');
   
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (user.isAdmin && isAdmin) {
+        navigate('/admin');
+      } else if (!isAdmin) {
+        navigate('/');
+      }
+    }
+  }, [user, isAdmin, navigate]);
+  
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: ''
+      email: isAdmin ? 'admin@example.com' : '',
+      password: isAdmin ? 'admin123' : ''
     }
   });
 
@@ -40,41 +52,67 @@ const Login: React.FC = () => {
     console.log('Login attempt:', data, 'isAdmin:', isAdmin);
     
     try {
-      const success = await login(data.email, data.password);
+      // Use the appropriate login method based on whether this is an admin login or not
+      let success = false;
       
-      if (success) {
-        const userJson = localStorage.getItem('currentUser');
-        if (!userJson) {
+      if (isAdmin) {
+        // Admin-specific login
+        try {
+          // Ensure we're explicitly passing required properties for LoginRequest
+          const loginData: LoginRequest = {
+            email: data.email,
+            password: data.password
+          };
+          
+          const response = await authApi.adminLogin(loginData);
+          // Store user data
+          localStorage.setItem('authToken', response.token);
+          localStorage.setItem('currentUser', JSON.stringify(response.user));
+          success = true;
+          
           toast({
-            title: "Login Error",
-            description: "User data not found",
+            title: "Admin Login Successful",
+            description: `Welcome back, ${response.user.name}!`,
+          });
+          
+          navigate('/admin');
+        } catch (error) {
+          toast({
+            title: "Admin Login Failed",
+            description: error instanceof Error ? error.message : "Invalid admin credentials",
             variant: "destructive"
           });
-          return;
         }
+      } else {
+        // Regular user login - ensuring we pass the required properties
+        const loginData: LoginRequest = {
+          email: data.email,
+          password: data.password
+        };
         
-        const { isAdmin: userIsAdmin } = JSON.parse(userJson);
+        success = await login(loginData.email, loginData.password);
         
-        if (isAdmin && !userIsAdmin) {
-          toast({
-            title: "Access Denied",
-            description: "This account doesn't have admin privileges",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        if (isAdmin && userIsAdmin) {
-          navigate('/admin', { replace: true });
-        } else {
-          navigate('/', { replace: true });
+        if (success) {
+          // Get user data from localStorage
+          const userJson = localStorage.getItem('currentUser');
+          if (!userJson) {
+            toast({
+              title: "Login Error",
+              description: "User data not found",
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          const userData = JSON.parse(userJson);
+          navigate('/');
         }
       }
     } catch (error) {
       console.error('Login error:', error);
       toast({
         title: "Login Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     }
